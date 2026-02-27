@@ -27,3 +27,7 @@ This JS snippet checks for affiliate IDs in the URL and in cookies. If a cookie 
 ## Shopify Custom App
 
 A shopify app needs to be created to provision an Admin API access token. The app needs to have `write_customers` access - this needs to be request
+
+## Shopify Metafield
+
+A metafield definition on customers should be created for it to show up properly in the admin. The `SetMetafield` mutation will create one but without a definiotion
