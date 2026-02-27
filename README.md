@@ -1,6 +1,13 @@
 # Affiliate Customer Attribution POC
 
-This repository has several snippets that live in different environments.
+This repository has several snippets that live in different environments. What these snippets accomplish is:
+
+1. A JS snippet on the site watches for affiliate ID URL parameters on page load
+2. Saves the affiliate ID in a cookie
+3. A web pixel checks on every page load if there's a logged-in customer
+4. When there is, it picks up the affiliate-id cookie and the customer-id and sends them to a cloud function
+5. The cloud function checks if the affiliate-id metafield on the customer is set. If it is, it does nothing. If it isn't it sets it.
+6. The cloud function would also trigger any other upstream updates
 
 ## Cloudflare function
 
@@ -22,7 +29,7 @@ It checks for an affiliate-id cookie and if it exists sends its value and the lo
 
 ## Shopify Theme Snippet
 
-This JS snippet checks for affiliate IDs in the URL and in cookies. If a cookie exists the URL is ignored, if not a cookie is created with the value from the URL
+This JS snippet checks for affiliate IDs in the URL and in cookies. If a cookie exists the URL is ignored, if not a cookie is created with the value from the URL. This snippet should be run on every page. This code can also be run via web pixel
 
 ## Shopify Custom App
 
