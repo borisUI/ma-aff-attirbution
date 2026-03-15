@@ -76,3 +76,10 @@ High-level documentation describing the purpose of the repository, the flow betw
 
 - **Custom App:** A Shopify custom app must be created with `write_customers` access scope to generate the Admin API token.
 - **Metafield Definition:** A metafield definition on the Customer object should be created in the Shopify admin so the field appears correctly in the UI. The `metafieldsSet` mutation will create the value without a definition, but a definition is recommended.
+
+---
+
+## Notes
+
+- This is a POC — production use would require additional error handling and security hardening.
+- The `workerUrl` in the web pixel must be updated to the live Cloudflare Worker URL before deploying.
