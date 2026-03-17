@@ -1,0 +1,18 @@
+{% comment %}
+  affiliate-check.liquid
+  Render this snippet once per page in layout/theme.liquid (after url-param-and-cookie.js loads).
+
+  Guards:
+  1. Customer must be logged in
+  2. Customer must NOT already have an affiliate metafield set
+
+  If both conditions are met, renders affiliate-attribution-storefront.js which reads
+  the affiliate-id cookie and POSTs to the app proxy to set the metafield.
+  If the metafield is already set, zero JS is executed for this customer.
+{% endcomment %}
+
+{% assign affiliate_meta = customer.metafields.custom.affiliate_id %}
+
+{% if customer and affiliate_meta == blank %}
+  <script src="{{ 'affiliate-attribution-storefront.js' | asset_url }}" defer></script>
+{% endif %}
