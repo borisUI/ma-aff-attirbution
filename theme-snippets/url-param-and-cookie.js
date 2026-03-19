@@ -24,7 +24,8 @@ function handleAffiliateId() {
   if (!existingCookie) {
     // Cookie doesn't exist, set it
     // Note: 'max-age' is in seconds (e.g., 86400 = 1 day)
-    document.cookie = `affiliate-id=${affiliateId}; path=/; max-age=86400; SameSite=Lax`;
+    const rootDomain = window.location.hostname.split(".").slice(-2).join(".");
+    document.cookie = `affiliate-id=${affiliateId}; path=/; max-age=86400; SameSite=Lax; domain=.${rootDomain}`;
     console.log(`Affiliate ID ${affiliateId} stored.`);
   } else {
     // Cookie exists, do nothing
