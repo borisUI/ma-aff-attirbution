@@ -1,8 +1,8 @@
 /*
- * ma-session-affiliate — Cloudflare Worker
+ * ma-session-portal — Cloudflare Worker
  *
  * Validates a Shopify Customer Account API session token, checks whether a
- * customer affiliate metafield is already set, and sets it if not.
+ * customer portal metafield is already set, and sets it if not.
  * Uses the Web Crypto API — no npm dependencies, paste directly into the
  * Cloudflare dashboard code editor.
  *
@@ -74,13 +74,13 @@
  * POST /
  * Body: {
  *   "session_token": "<shopify-jwt>",
- *   "affiliate_id":  "<affiliate-id-string>",
+ *   "portal_id":  "<portal-id-string>",
  *   "customer_id":   "<numeric-shopify-customer-id>"
  * }
  *
  * ─── RESPONSE ─────────────────────────────────────────────────────────────────
  *
- * 200: { "customerId": "<id>", "affiliateId": "<id>" }  — metafield set
+ * 200: { "customerId": "<id>", "portalId": "<id>" }  — metafield set
  * 400: Missing or malformed request body
  * 401: Invalid or expired session token
  * 409: Metafield already set — no action taken
@@ -116,7 +116,7 @@ export default {
       });
     }
 
-    const { session_token, affiliate_id, customer_id } = body;
+    const { session_token, portal_id, customer_id } = body;
 
     if (!session_token) {
       return new Response(JSON.stringify({ error: "Missing session_token" }), {
@@ -125,8 +125,8 @@ export default {
       });
     }
 
-    if (!affiliate_id) {
-      return new Response(JSON.stringify({ error: "Missing affiliate_id" }), {
+    if (!portal_id) {
+      return new Response(JSON.stringify({ error: "Missing portal_id" }), {
         status: 400,
         headers: corsHeaders,
       });
@@ -141,7 +141,12 @@ export default {
 
     let payload;
     try {
-      payload = await verifyShopifyJWT(session_token, env.SHOPIFY_CLIENT_ID, env.SHOPIFY_CLIENT_SECRET, env.SHOPIFY_STORE_URL);
+      payload = await verifyShopifyJWT(
+        session_token,
+        env.SHOPIFY_CLIENT_ID,
+        env.SHOPIFY_CLIENT_SECRET,
+        env.SHOPIFY_STORE_URL,
+      );
     } catch (err) {
       return new Response(
         JSON.stringify({
@@ -153,7 +158,11 @@ export default {
     }
 
     // Exchange client credentials for a short-lived Admin API token
-    const adminToken = await getAdminAccessToken(env.SHOPIFY_STORE_URL, env.SHOPIFY_CLIENT_ID, env.SHOPIFY_CLIENT_SECRET);
+    const adminToken = await getAdminAccessToken(
+      env.SHOPIFY_STORE_URL,
+      env.SHOPIFY_CLIENT_ID,
+      env.SHOPIFY_CLIENT_SECRET,
+    );
 
     // Check if the metafield is already set
     const customerMetafield = await getCustomerMetafield(
@@ -167,7 +176,7 @@ export default {
     const existingValue = customerMetafield?.data?.customer?.metafield?.value;
     if (existingValue && existingValue !== "") {
       return new Response(
-        JSON.stringify({ error: "Affiliate metafield already set" }),
+        JSON.stringify({ error: "portal metafield already set" }),
         { status: 409, headers: corsHeaders },
       );
     }
@@ -179,11 +188,11 @@ export default {
       customer_id,
       env.METAFIELD_NAMESPACE,
       env.METAFIELD_KEY,
-      affiliate_id,
+      portal_id,
     );
 
     return new Response(
-      JSON.stringify({ customerId: customer_id, affiliateId: affiliate_id }),
+      JSON.stringify({ customerId: customer_id, portalId: portal_id }),
       { status: 200, headers: corsHeaders },
     );
   },
@@ -192,18 +201,15 @@ export default {
 // ─── SHOPIFY ADMIN API ────────────────────────────────────────────────────────
 
 async function getAdminAccessToken(shop, clientId, clientSecret) {
-  const response = await fetch(
-    `https://${shop}/admin/oauth/access_token`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        grant_type: "client_credentials",
-      }),
-    },
-  );
+  const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: "client_credentials",
+    }),
+  });
 
   if (!response.ok) {
     const err = await response.text();
@@ -245,7 +251,14 @@ async function getCustomerMetafield(shop, token, customerId, namespace, key) {
   return response.json();
 }
 
-async function updateCustomerMetafield(shop, token, customerId, namespace, key, value) {
+async function updateCustomerMetafield(
+  shop,
+  token,
+  customerId,
+  namespace,
+  key,
+  value,
+) {
   const response = await fetch(
     `https://${shop}/admin/api/2026-01/graphql.json`,
     {
@@ -340,7 +353,10 @@ async function verifyShopifyJWT(token, clientId, clientSecret, storeUrl) {
 
 function base64urlDecode(str) {
   const base64 = str.replace(/-/g, "+").replace(/_/g, "/");
-  const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
+  const padded = base64.padEnd(
+    base64.length + ((4 - (base64.length % 4)) % 4),
+    "=",
+  );
   const binary = atob(padded);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {

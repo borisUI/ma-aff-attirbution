@@ -10,8 +10,8 @@ analytics.subscribe("get_session_token", async (event) => {
     return;
   }
 
-  const affiliateId = await browser.cookie.get("affiliate_id");
-  if (!affiliateId) {
+  const portalId = await browser.cookie.get("portal_id");
+  if (!portalId) {
     console.log("NO AFFILIATE ID FOUND IN COOKIES");
     return;
   }
@@ -21,7 +21,7 @@ analytics.subscribe("get_session_token", async (event) => {
   const newMetafieldResponse = await fetch(workerUrl, {
     method: "POST",
     body: JSON.stringify({
-      affiliate_id: affiliateId,
+      portal_id: portalId,
       customer_id: customer.id,
       session_token: token,
     }),
