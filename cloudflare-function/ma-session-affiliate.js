@@ -56,10 +56,11 @@
  *
  *   SHOPIFY_CLIENT_SECRET — Client Secret from Dev Dashboard → Settings.
  *                           Used to verify the HS256 signature on session
- *                           tokens and to fetch Admin API tokens at runtime.
- *                           No static admin token is needed — the worker
- *                           exchanges these credentials for a short-lived
- *                           token on each request.
+ *                           tokens.
+ *
+ *   SHOPIFY_ADMIN_TOKEN  — Offline Admin API access token (shpat_...).
+ *                           Obtain once via the OAuth authorization code grant
+ *                           and store as a Cloudflare secret.
  *
  *   SHOPIFY_STORE_URL     — The store's myshopify.com domain.
  *                           Format: my-store.myshopify.com
@@ -157,12 +158,7 @@ export default {
       );
     }
 
-    // Exchange client credentials for a short-lived Admin API token
-    const adminToken = await getAdminAccessToken(
-      env.SHOPIFY_STORE_URL,
-      env.SHOPIFY_CLIENT_ID,
-      env.SHOPIFY_CLIENT_SECRET,
-    );
+    const adminToken = env.SHOPIFY_ADMIN_TOKEN;
 
     // Check if the metafield is already set
     const customerMetafield = await getCustomerMetafield(
@@ -343,6 +339,7 @@ async function verifyShopifyJWT(token, clientId, clientSecret, storeUrl) {
   if (payload.exp && now > payload.exp) throw new Error("Token expired");
   if (payload.nbf && now < payload.nbf) throw new Error("Token not yet valid");
   const expectedIssuer = `https://${storeUrl}/checkouts`;
+  console.log("DEBUG issuer - payload.iss:", payload.iss, "| expected:", expectedIssuer);
   if (payload.iss !== expectedIssuer) throw new Error("Invalid issuer");
   if (payload.aud !== clientId) throw new Error("Invalid audience");
 
